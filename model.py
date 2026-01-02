@@ -1,6 +1,3 @@
-"""
-Predictive model for NCAA basketball games.
-"""
 import math
 from config import LEAGUE_AVG_OE, LEAGUE_AVG_DE, STD_TOTAL
 
