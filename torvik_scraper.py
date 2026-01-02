@@ -32,3 +32,8 @@ def scrape_torvik():
 
 if __name__ == "__main__":
     scrape_torvik()
+def run():
+    scrape_torvik()
+
+if __name__ == "__main__":
+    run()
