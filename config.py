@@ -1,3 +1,12 @@
 """
 Configuration settings for the NCAA predictive model.
 """
+LEAGUE_AVG_OE = 110
+LEAGUE_AVG_DE = 110
+STD_TOTAL = 11
+
+EDGE_THRESHOLD = 3.0
+CONF_THRESHOLD = 0.60
+
+BANKROLL = 1000
+KELLY_FRACTION = 0.5
