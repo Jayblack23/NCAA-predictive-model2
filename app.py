@@ -1,8 +1,9 @@
 import os
-import subprocess
 import streamlit as st
 import pandas as pd
 
+from torvik_scraper import run as run_torvik
+from odds_collector import run as run_odds
 from model import projected_total, prob_over
 from bet_sizing import kelly
 from config import EDGE_THRESHOLD, CONF_THRESHOLD
@@ -11,16 +12,22 @@ st.set_page_config(layout="wide")
 st.title("🏀 NCAAB Totals Model")
 
 # --------------------------------------------------
-# AUTO-GENERATE DATA IF MISSING
+# ENSURE DATA DIRECTORY
+# --------------------------------------------------
+
+os.makedirs("data", exist_ok=True)
+
+# --------------------------------------------------
+# ENSURE DATA FILES EXIST (NO SUBPROCESS)
 # --------------------------------------------------
 
 if not os.path.exists("data/team_stats.csv"):
-    st.warning("Team stats not found. Running Torvik scraper...")
-    subprocess.run(["python", "torvik_scraper.py"], check=True)
+    st.info("Fetching team efficiency data (Bart Torvik)...")
+    run_torvik()
 
 if not os.path.exists("data/odds_history.csv"):
-    st.warning("Odds history not found. Collecting odds...")
-    subprocess.run(["python", "odds_collector.py"], check=True)
+    st.info("Fetching market totals (Odds API)...")
+    run_odds()
 
 # --------------------------------------------------
 # LOAD DATA
@@ -34,15 +41,19 @@ teams = (
 
 odds = pd.read_csv("data/odds_history.csv")
 
-teams = pd.read_csv("data/team_stats.csv").set_index("team").to_dict("index")
-odds = pd.read_csv("data/odds_history.csv")
-
 games = odds.groupby("game")["total"].mean()
 
 rows = []
 
+# --------------------------------------------------
+# MODEL LOOP
+# --------------------------------------------------
+
 for game, market in games.items():
-    away, home = game.lower().split(" @ ")
+    try:
+        away, home = game.lower().split(" @ ")
+    except ValueError:
+        continue
 
     if home not in teams or away not in teams:
         continue
@@ -69,4 +80,5 @@ for game, market in games.items():
     })
 
 df = pd.DataFrame(rows).sort_values("Edge", ascending=False)
+
 st.dataframe(df, use_container_width=True)
