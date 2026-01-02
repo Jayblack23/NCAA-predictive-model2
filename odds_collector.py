@@ -41,3 +41,8 @@ def collect_odds():
 
 if __name__ == "__main__":
     collect_odds()
+def run():
+    collect_odds()
+
+if __name__ == "__main__":
+    run()
