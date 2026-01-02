@@ -1,6 +1,3 @@
-"""
-Configuration settings for the NCAA predictive model.
-"""
 LEAGUE_AVG_OE = 110
 LEAGUE_AVG_DE = 110
 STD_TOTAL = 11
