@@ -4,28 +4,21 @@ import os
 TORVIK_CSV_URL = "https://barttorvik.com/getdata.php?conlimit=All&year=2025&csv=1"
 
 def scrape_torvik():
-    df = pd.read_csv(
-        TORVIK_CSV_URL,
-        engine="python",       # REQUIRED for malformed CSV
-        sep=None,              # AUTO-detect delimiter (CRITICAL)
-        encoding="utf-8",
-        on_bad_lines="skip",
-    )
+    df = pd.read_csv(TORVIK_CSV_URL)
 
     # Normalize column names
     df.columns = df.columns.str.lower().str.strip()
 
-    required_cols = ["team", "adjoe", "adjde", "tempo"]
-    missing = [c for c in required_cols if c not in df.columns]
-
+    required = ["team", "adjoe", "adjde", "tempo"]
+    missing = [c for c in required if c not in df.columns]
     if missing:
-        raise RuntimeError(f"Missing required Torvik columns: {missing}")
+        raise RuntimeError(f"Missing required columns: {missing}")
 
-    df = df[required_cols]
+    df = df[required]
 
-    # Force numeric types
-    for col in ["adjoe", "adjde", "tempo"]:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
+    # Force numeric
+    for c in ["adjoe", "adjde", "tempo"]:
+        df[c] = pd.to_numeric(df[c], errors="coerce")
 
     df = df.dropna()
 
