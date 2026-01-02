@@ -1,37 +1,31 @@
 import pandas as pd
-import requests
-from bs4 import BeautifulSoup
-from datetime import date
+import os
 
-URL = "https://barttorvik.com/trank.php?year=2025"
+TORVIK_CSV_URL = "https://barttorvik.com/getdata.php?conlimit=All&year=2025&csv=1"
 
 def scrape_torvik():
-    html = requests.get(URL, headers={"User-Agent": "Mozilla/5.0"}).text
-    soup = BeautifulSoup(html, "html.parser")
+    df = pd.read_csv(TORVIK_CSV_URL)
 
-    table = soup.find("table", {"id": "ratings-table"})
-    rows = []
+    # Normalize column names
+    df.columns = [c.lower().strip() for c in df.columns]
 
-    for r in table.find_all("tr")[1:]:
-        c = [x.text.strip() for x in r.find_all("td")]
-        if len(c) < 10:
-            continue
+    # Required fields
+    required = {
+        "team": "team",
+        "adjoe": "adjoe",
+        "adjde": "adjde",
+        "tempo": "tempo"
+    }
 
-        rows.append({
-            "team": c[1].lower(),
-            "tempo": float(c[4]),
-            "adj_oe": float(c[5]),
-            "adj_de": float(c[7]),
-            "conference": c[3],
-            "date": date.today()
-        })
+    missing = [c for c in required if c not in df.columns]
+    if missing:
+        raise RuntimeError(f"Missing required columns: {missing}")
 
-    df = pd.DataFrame(rows)
+    df = df[list(required.values())]
+
+    os.makedirs("data", exist_ok=True)
     df.to_csv("data/team_stats.csv", index=False)
-    print("✔ team_stats.csv updated")
 
-if __name__ == "__main__":
-    scrape_torvik()
 def run():
     scrape_torvik()
 
