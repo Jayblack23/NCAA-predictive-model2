@@ -1,1 +1,4 @@
-# Python dependencies for NCAA predictive model
+streamlit
+pandas
+requests
+beautifulsoup4
