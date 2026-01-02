@@ -1,28 +1,17 @@
-name: Update Data
+name: Update NCAAB Data
 
 on:
   schedule:
-    # Run daily at midnight UTC
-    - cron: '0 0 * * *'
-  workflow_dispatch:
+    - cron: "0 */6 * * *"
 
 jobs:
-  update-data:
+  update:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
-      
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-      
-      - name: Update data
-        run: |
-          python app.py
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - run: python torvik_scraper.py
+      - run: python odds_collector.py
