@@ -1,3 +1,5 @@
+import os
+import subprocess
 import streamlit as st
 import pandas as pd
 
@@ -7,6 +9,30 @@ from config import EDGE_THRESHOLD, CONF_THRESHOLD
 
 st.set_page_config(layout="wide")
 st.title("🏀 NCAAB Totals Model")
+
+# --------------------------------------------------
+# AUTO-GENERATE DATA IF MISSING
+# --------------------------------------------------
+
+if not os.path.exists("data/team_stats.csv"):
+    st.warning("Team stats not found. Running Torvik scraper...")
+    subprocess.run(["python", "torvik_scraper.py"], check=True)
+
+if not os.path.exists("data/odds_history.csv"):
+    st.warning("Odds history not found. Collecting odds...")
+    subprocess.run(["python", "odds_collector.py"], check=True)
+
+# --------------------------------------------------
+# LOAD DATA
+# --------------------------------------------------
+
+teams = (
+    pd.read_csv("data/team_stats.csv")
+    .set_index("team")
+    .to_dict("index")
+)
+
+odds = pd.read_csv("data/odds_history.csv")
 
 teams = pd.read_csv("data/team_stats.csv").set_index("team").to_dict("index")
 odds = pd.read_csv("data/odds_history.csv")
