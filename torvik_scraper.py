@@ -4,9 +4,13 @@ import os
 TORVIK_CSV_URL = "https://barttorvik.com/getdata.php?conlimit=All&year=2025&csv=1"
 
 def scrape_torvik():
-    df = pd.read_csv(TORVIK_CSV_URL)
+    df = pd.read_csv(
+        TORVIK_CSV_URL,
+        comment="#",           # ignore comment-style lines
+        skip_blank_lines=True  # ignore empty lines
+    )
 
-    # Normalize column names
+    # Normalize columns
     df.columns = df.columns.str.lower().str.strip()
 
     required = ["team", "adjoe", "adjde", "tempo"]
@@ -16,9 +20,9 @@ def scrape_torvik():
 
     df = df[required]
 
-    # Force numeric
-    for c in ["adjoe", "adjde", "tempo"]:
-        df[c] = pd.to_numeric(df[c], errors="coerce")
+    # Convert to numeric
+    for col in ["adjoe", "adjde", "tempo"]:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
 
     df = df.dropna()
 
