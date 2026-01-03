@@ -3,41 +3,42 @@ import requests
 import os
 from io import StringIO
 
-TORVIK_CSV_URL = "https://barttorvik.com/getdata.php?conlimit=All&year=2025&csv=1"
+TORVIK_URL = "https://barttorvik.com/getdata.php?conlimit=All&year=2025&csv=1"
+
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    )
+}
 
 def scrape_torvik():
-    resp = requests.get(TORVIK_CSV_URL, timeout=30)
-    resp.raise_for_status()
+    r = requests.get(TORVIK_URL, headers=HEADERS, timeout=30)
+    r.raise_for_status()
 
-    lines = resp.text.splitlines()
+    text = r.text.strip()
 
-    # Find the real CSV header
-    header_idx = None
-    for i, line in enumerate(lines):
-        if line.lower().startswith("team,"):
-            header_idx = i
-            break
+    # ❌ Torvik blocked us (HTML page)
+    if text.lower().startswith("<!doctype html") or "<html" in text.lower():
+        raise RuntimeError("Torvik blocked automated access (HTML returned)")
 
-    if header_idx is None:
-        raise RuntimeError("Could not locate CSV header in Torvik data")
+    # Identify delimiter
+    delimiter = "," if "," in text.splitlines()[0] else "\t"
 
-    csv_text = "\n".join(lines[header_idx:])
+    df = pd.read_csv(StringIO(text), sep=delimiter)
 
-    df = pd.read_csv(StringIO(csv_text))
-
-    # Normalize column names
     df.columns = df.columns.str.lower().str.strip()
 
     required = ["team", "adjoe", "adjde", "tempo"]
     missing = [c for c in required if c not in df.columns]
     if missing:
-        raise RuntimeError(f"Missing required columns: {missing}")
+        raise RuntimeError(f"Required columns missing: {missing}")
 
     df = df[required]
 
-    # Convert to numeric
-    for col in ["adjoe", "adjde", "tempo"]:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
+    for c in ["adjoe", "adjde", "tempo"]:
+        df[c] = pd.to_numeric(df[c], errors="coerce")
 
     df = df.dropna()
 
