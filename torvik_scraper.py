@@ -1,16 +1,31 @@
 import pandas as pd
+import requests
 import os
+from io import StringIO
 
 TORVIK_CSV_URL = "https://barttorvik.com/getdata.php?conlimit=All&year=2025&csv=1"
 
 def scrape_torvik():
-    df = pd.read_csv(
-        TORVIK_CSV_URL,
-        comment="#",           # ignore comment-style lines
-        skip_blank_lines=True  # ignore empty lines
-    )
+    resp = requests.get(TORVIK_CSV_URL, timeout=30)
+    resp.raise_for_status()
 
-    # Normalize columns
+    lines = resp.text.splitlines()
+
+    # Find the real CSV header
+    header_idx = None
+    for i, line in enumerate(lines):
+        if line.lower().startswith("team,"):
+            header_idx = i
+            break
+
+    if header_idx is None:
+        raise RuntimeError("Could not locate CSV header in Torvik data")
+
+    csv_text = "\n".join(lines[header_idx:])
+
+    df = pd.read_csv(StringIO(csv_text))
+
+    # Normalize column names
     df.columns = df.columns.str.lower().str.strip()
 
     required = ["team", "adjoe", "adjde", "tempo"]
